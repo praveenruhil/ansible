@@ -1,0 +1,9 @@
+---
+- hosts: webservers
+  become_user: root
+  become: true
+  tasks:
+    - name: stop http
+      service: name=httpd state=stopped
+    - name: stop firewalld
+      service: name=firewalld state=stopped

@@ -1,0 +1,39 @@
+---
+- hosts: webservers
+  become_user: root
+  become: true
+  tasks:
+  - name: Install python
+    yum: pkg=python state=latest
+  - name: Get hostname
+    shell: hostname -s
+    register: hostname
+  - name: Assign hostname
+    set_fact:
+      hos: "{{ hostname.stdout }}"
+  - name: Install Http on Redhat
+    yum: pkg=httpd state=latest
+  - name: Install Firewalld on Redhat
+    yum: pkg=firewalld state=latest
+  - name: Enable Apache
+    service: name=httpd enabled=yes
+  - name: Deploying index file
+    template: src=/etc/ansible/index.html dest=/var/www/html
+              owner=root group=root mode=0644
+  - name: Enable firewalld
+    raw: systemctl enable firewalld
+
+    notify:
+    - start http
+    - setup firewalld
+    - reload firewalld
+  handlers:
+    - name: start http
+      service: name=httpd state=started
+    - name: setup firewalld
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+    - name: reload firewalld
+      service: name=firewalld state=restarted
